@@ -1,0 +1,9 @@
+log_level: info
+network: mainnet
+http: true
+http_port: 6060
+metrics: true
+metrics_port: 9090
+port_mapping: "6060:6060"
+config_path: /snapshots/juno_config.yaml
+db_path: /snapshots/juno_mainnet

@@ -1,0 +1,64 @@
+---
+- name: Deploy Juno
+  hosts: localhost
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - juno_vars.yaml
+
+  tasks:
+
+    - name: Create Snapshots directory
+      ansible.builtin.file:
+        path: /snapshots
+        owner: root
+        group: root
+        mode: "0755"
+        state: directory
+
+    - name: Create Juno configuration file from template
+      ansible.builtin.template:
+        src: juno_config.j2
+        dest: "{{ config_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Pull Juno Docker image
+      community.docker.docker_image:
+        name: nethermind/juno
+        source: pull
+
+    - name: Run the Juno container with configuration file
+      community.docker.docker_container:
+        name: "juno"
+        image: "nethermind/juno"
+        state: started
+        detach: true
+        ports:
+          - "{{ port_mapping }}"
+        volumes:
+          - "/snapshots/juno_mainnet:/snapshots/juno_mainnet"
+          - "{{ config_path }}:/juno_config.yml"
+        command: ["--config", "/juno_config.yml"]
+
+    - name: Validate Juno container logs for 'Stored Block'
+      community.docker.docker_container_info:
+        name: "juno"
+      register: container_info
+
+    - name: Check Juno logs for expected output
+      ansible.builtin.command: "docker logs {{ container_info.container.Id }}"
+      register: juno_logs
+      no_log: true
+
+    - name: Validate Juno log for 'Juno is a Go implementation of a Starknet full-node client created by Nethermind'
+      ansible.builtin.fail:
+        msg: "Validation failed: Expected output not found in logs."
+      when: "'Juno is a Go implementation of a Starknet full-node client created by Nethermind' not in juno_logs.stdout"
+
+    - name: Log validation success message
+      ansible.builtin.debug:
+        msg: "Log validation successful: Expected output found in logs."
+      when: "'Juno is a Go implementation of a Starknet full-node client created by Nethermind' in juno_logs.stdout"

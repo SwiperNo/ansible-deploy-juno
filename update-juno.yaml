@@ -1,0 +1,58 @@
+---
+- name: Update Juno container
+  hosts: localhost
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - juno_vars.yml
+
+  tasks:
+    - name: Stop the current Juno container if it exists
+      community.docker.docker_container:
+        name: "juno"
+        state: stopped
+      ignore_errors: true
+
+    - name: Remove the current Juno container if it exists
+      community.docker.docker_container:
+        name: "juno"
+        state: absent
+      ignore_errors: true
+
+    - name: Pull the latest Juno Docker image
+      community.docker.docker_image:
+        name: nethermind/juno
+        source: pull
+
+    - name: Run the Juno container with configuration file
+      community.docker.docker_container:
+        name: "juno"
+        image: "nethermind/juno"
+        state: started
+        detach: true
+        ports:
+          - "{{ port_mapping }}"
+        volumes:
+          - "/snapshots/juno_mainnet:/snapshots/juno_mainnet"
+          - "{{ config_path }}:/juno_config.yml"
+        command: ["--config", "/juno_config.yml"]
+
+    - name: Wait for 5 seconds to allow the container to start
+      ansible.builtin.wait_for:
+        timeout: 5
+
+    - name: Retrieve Juno logs
+      ansible.builtin.command: "docker logs juno"
+      register: juno_logs
+      no_log: true  # Suppresses log output to avoid screen clutter
+
+    - name: Validate if 'Juno is a Go implementation of a Starknet full-node client created by Nethermind' is in logs
+      ansible.builtin.fail:
+        msg: "Validation failed: Expected output not found in logs."
+      when: "'Juno is a Go implementation of a Starknet full-node client created by Nethermind' not in juno_logs.stdout"
+
+    - name: Log validation success message
+      ansible.builtin.debug:
+        msg: "Log validation successful: Expected output found in logs."
+      when: "'Juno is a Go implementation of a Starknet full-node client created by Nethermind' in juno_logs.stdout"
