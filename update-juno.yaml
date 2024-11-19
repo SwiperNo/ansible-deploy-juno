@@ -5,7 +5,7 @@
   become: true
 
   vars_files:
-    - juno_vars.yml
+    - juno_vars.yaml
 
   tasks:
     - name: Stop the current Juno container if it exists

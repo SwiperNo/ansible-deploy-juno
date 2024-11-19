@@ -35,7 +35,7 @@ cd /home/ansible || exit 1
 
 # Copy cloned repo to the ansible home directory
 echo "Copying deployment setup to ansible user home directory..."
-cp -r ansible-deploy-juno/* /home/ansible/
+cp -r * /home/ansible/
 
 
 # Install Docker
@@ -64,7 +64,7 @@ fi
 echo "Adding ansible user to docker group and refreshing group..."
 sudo usermod -aG docker ansible
 # Refresh and add ansible user to group
-sudo newgrp docker
+# su - ansible -c "newgrp docker"
 
 
 # Set up Python virtual environment
@@ -89,7 +89,7 @@ EOL
 
 # Updating ownsership of all files
 echo "Updating ansible user ownership for files..."
-chown ansible:ansible /home/ansible/*
+sudo chown ansible:ansible /home/ansible/*
 
 # Validate Docker installation
 echo "Validating Docker installation..."
