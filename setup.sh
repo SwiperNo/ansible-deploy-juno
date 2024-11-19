@@ -32,7 +32,7 @@ chmod 440 /etc/sudoers.d/ansible
 
 # Copy cloned repo to the ansible home directory
 echo "Copying deployment setup to ansible user home directory..."
-cp -r * /home/ansible/
+find . -maxdepth 1 -type f ! -name 'README.md' ! -name 'setup.sh' -exec cp {} /home/ansible \;
 
 
 # Switch to ansible user’s home directory
