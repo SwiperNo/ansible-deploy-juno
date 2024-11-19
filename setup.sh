@@ -29,13 +29,15 @@ echo "Configuring passwordless sudo for 'ansible' user..."
 echo "ansible ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ansible
 chmod 440 /etc/sudoers.d/ansible
 
-# Switch to ansible user’s home directory
-echo "Switcing to ansible user home directory..."
-cd /home/ansible || exit 1
 
 # Copy cloned repo to the ansible home directory
 echo "Copying deployment setup to ansible user home directory..."
 cp -r * /home/ansible/
+
+
+# Switch to ansible user’s home directory
+echo "Switcing to ansible user home directory..."
+cd /home/ansible || exit 1
 
 
 # Install Docker
@@ -99,3 +101,8 @@ echo "Setup complete. Switch to the 'ansible' user by running:"
 echo "su - ansible"
 echo "Activate the Python virtual environment with:"
 echo "source ~/venv/bin/activate"
+
+
+# # Execute the playbook as the ansible user - work in progress
+# echo "Deploying ansible-playbook"
+# su - ansible -c "~/ansible-playbook -i inventory deploy-juno.yaml -vv"
